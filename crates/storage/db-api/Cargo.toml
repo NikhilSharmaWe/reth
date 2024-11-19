@@ -13,6 +13,7 @@ workspace = true
 
 [dependencies]
 # reth
+tracing.workspace = true
 reth-codecs.workspace = true
 reth-db-models.workspace = true
 reth-primitives = { workspace = true, features = ["reth-codec"] }

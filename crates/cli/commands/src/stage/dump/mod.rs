@@ -3,7 +3,7 @@ use crate::common::{AccessRights, Environment, EnvironmentArgs};
 use clap::Parser;
 use reth_chainspec::ChainSpec;
 use reth_cli::chainspec::ChainSpecParser;
-use reth_db::{init_db, mdbx::DatabaseArguments, tables, DatabaseEnv};
+use reth_db::{init_db, mdbx::DatabaseArguments, tables, DatabaseEnvIAVL};
 use reth_db_api::{
     cursor::DbCursorRO, database::Database, models::ClientVersion, table::TableImporter,
     transaction::DbTx,
@@ -118,7 +118,7 @@ pub(crate) fn setup<N: NodeTypesWithDB>(
     to: u64,
     output_db: &PathBuf,
     db_tool: &DbTool<N>,
-) -> eyre::Result<(DatabaseEnv, u64)> {
+) -> eyre::Result<(DatabaseEnvIAVL, u64)> {
     assert!(from < to, "FROM block should be bigger than TO block.");
 
     info!(target: "reth::cli", ?output_db, "Creating separate db");

@@ -5,7 +5,7 @@ use reth_chainspec::ChainSpec;
 use reth_cli::chainspec::ChainSpecParser;
 use reth_cli_runner::CliContext;
 use reth_cli_util::parse_socket_address;
-use reth_db::{init_db, DatabaseEnv};
+use reth_db::{init_db, DatabaseEnvIAVL};
 use reth_node_builder::{NodeBuilder, WithLaunchContext};
 use reth_node_core::{
     args::{
@@ -135,7 +135,7 @@ impl<C: ChainSpecParser<ChainSpec = ChainSpec>, Ext: clap::Args + fmt::Debug> No
     /// closure.
     pub async fn execute<L, Fut>(self, ctx: CliContext, launcher: L) -> eyre::Result<()>
     where
-        L: FnOnce(WithLaunchContext<NodeBuilder<Arc<DatabaseEnv>>>, Ext) -> Fut,
+        L: FnOnce(WithLaunchContext<NodeBuilder<Arc<DatabaseEnvIAVL>>>, Ext) -> Fut,
         Fut: Future<Output = eyre::Result<()>>,
     {
         tracing::info!(target: "reth::cli", version = ?version::SHORT_VERSION, "Starting reth");

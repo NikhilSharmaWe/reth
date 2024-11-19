@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::setup;
 use reth_chainspec::ChainSpec;
-use reth_db::{tables, DatabaseEnv};
+use reth_db::{tables, DatabaseEnvIAVL};
 use reth_db_api::{
     cursor::DbCursorRO, database::Database, table::TableImporter, transaction::DbTx,
 };
@@ -34,7 +34,7 @@ where
 
     if should_run {
         dry_run(
-            ProviderFactory::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>::new(
+            ProviderFactory::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>::new(
                 Arc::new(output_db),
                 db_tool.chain(),
                 StaticFileProvider::read_write(output_datadir.static_files())?,
@@ -50,7 +50,7 @@ where
 
 /// Imports all the tables that can be copied over a range.
 fn import_tables_with_range<N: NodeTypesWithDB>(
-    output_db: &DatabaseEnv,
+    output_db: &DatabaseEnvIAVL,
     db_tool: &DbTool<N>,
     from: u64,
     to: u64,
@@ -133,7 +133,7 @@ fn unwind_and_copy<N: NodeTypesWithDB<ChainSpec = ChainSpec>>(
     db_tool: &DbTool<N>,
     from: u64,
     tip_block_number: u64,
-    output_db: &DatabaseEnv,
+    output_db: &DatabaseEnvIAVL,
 ) -> eyre::Result<()> {
     let provider = db_tool.provider_factory.provider_rw()?;
 

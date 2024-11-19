@@ -34,7 +34,7 @@ pub use tables::*;
 pub use utils::is_database_empty;
 
 #[cfg(feature = "mdbx")]
-pub use mdbx::{create_db, init_db, open_db, open_db_read_only, DatabaseEnv, DatabaseEnvKind};
+pub use mdbx::{create_db, init_db, open_db, open_db_read_only, DatabaseEnvIAVL, DatabaseEnvKind};
 
 pub use models::ClientVersion;
 pub use reth_db_api::*;
@@ -139,7 +139,7 @@ pub mod test_utils {
     }
 
     /// Create read/write database for testing
-    pub fn create_test_rw_db() -> Arc<TempDatabase<DatabaseEnv>> {
+    pub fn create_test_rw_db() -> Arc<TempDatabase<DatabaseEnvIAVL>> {
         let path = tempdir_path();
         let emsg = format!("{ERROR_DB_CREATION}: {path:?}");
 
@@ -154,7 +154,7 @@ pub mod test_utils {
     }
 
     /// Create read/write database for testing
-    pub fn create_test_rw_db_with_path<P: AsRef<Path>>(path: P) -> Arc<TempDatabase<DatabaseEnv>> {
+    pub fn create_test_rw_db_with_path<P: AsRef<Path>>(path: P) -> Arc<TempDatabase<DatabaseEnvIAVL>> {
         let path = path.as_ref().to_path_buf();
         let db = init_db(
             path.as_path(),
@@ -166,7 +166,7 @@ pub mod test_utils {
     }
 
     /// Create read only database for testing
-    pub fn create_test_ro_db() -> Arc<TempDatabase<DatabaseEnv>> {
+    pub fn create_test_ro_db() -> Arc<TempDatabase<DatabaseEnvIAVL>> {
         let args = DatabaseArguments::new(ClientVersion::default())
             .with_max_read_transaction_duration(Some(MaxReadTransactionDuration::Unbounded));
 

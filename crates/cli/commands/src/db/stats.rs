@@ -5,7 +5,7 @@ use eyre::WrapErr;
 use human_bytes::human_bytes;
 use itertools::Itertools;
 use reth_chainspec::ChainSpec;
-use reth_db::{mdbx, static_file::iter_static_files, DatabaseEnv, TableViewer, Tables};
+use reth_db::{mdbx, static_file::iter_static_files, DatabaseEnvIAVL, TableViewer, Tables};
 use reth_db_api::database::Database;
 use reth_db_common::DbTool;
 use reth_fs_util as fs;
@@ -41,7 +41,7 @@ impl Command {
     pub fn execute<N: NodeTypesWithEngine<ChainSpec = ChainSpec>>(
         self,
         data_dir: ChainPath<DataDirPath>,
-        tool: &DbTool<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>,
+        tool: &DbTool<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>,
     ) -> eyre::Result<()> {
         if self.checksum {
             let checksum_report = self.checksum_report(tool)?;
@@ -60,7 +60,7 @@ impl Command {
         Ok(())
     }
 
-    fn db_stats_table<N: NodeTypesWithDB<DB = Arc<DatabaseEnv>>>(
+    fn db_stats_table<N: NodeTypesWithDB<DB = Arc<DatabaseEnvIAVL>>>(
         &self,
         tool: &DbTool<N>,
     ) -> eyre::Result<ComfyTable> {

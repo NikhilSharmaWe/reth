@@ -3,7 +3,7 @@ use alloy_primitives::hex;
 use clap::Parser;
 use eyre::WrapErr;
 use reth_chainspec::ChainSpec;
-use reth_db::{DatabaseEnv, RawValue, TableViewer, Tables};
+use reth_db::{DatabaseEnvIAVL, RawValue, TableViewer, Tables};
 use reth_db_api::{database::Database, table::Table};
 use reth_db_common::{DbTool, ListFilter};
 use reth_node_builder::{NodeTypesWithDBAdapter, NodeTypesWithEngine};
@@ -55,7 +55,7 @@ impl Command {
     /// Execute `db list` command
     pub fn execute<N: NodeTypesWithEngine<ChainSpec = ChainSpec>>(
         self,
-        tool: &DbTool<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>,
+        tool: &DbTool<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>,
     ) -> eyre::Result<()> {
         self.table.view(&ListTableViewer { tool, args: &self })
     }
@@ -87,7 +87,7 @@ impl Command {
 }
 
 struct ListTableViewer<'a, N: NodeTypesWithEngine> {
-    tool: &'a DbTool<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>,
+    tool: &'a DbTool<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>,
     args: &'a Command,
 }
 

@@ -9,7 +9,7 @@ pub use reth_libmdbx::*;
 
 /// Creates a new database at the specified path if it doesn't exist. Does NOT create tables. Check
 /// [`init_db`].
-pub fn create_db<P: AsRef<Path>>(path: P, args: DatabaseArguments) -> eyre::Result<DatabaseEnv> {
+pub fn create_db<P: AsRef<Path>>(path: P, args: DatabaseArguments) -> eyre::Result<DatabaseEnvIAVL> {
     use crate::version::{check_db_version_file, create_db_version_file, DatabaseVersionError};
 
     let rpath = path.as_ref();
@@ -25,12 +25,12 @@ pub fn create_db<P: AsRef<Path>>(path: P, args: DatabaseArguments) -> eyre::Resu
         }
     }
 
-    Ok(DatabaseEnv::open(rpath, DatabaseEnvKind::RW, args)?)
+    Ok(DatabaseEnvIAVL::open(rpath, DatabaseEnvKind::RW, args)?)
 }
 
 /// Opens up an existing database or creates a new one at the specified path. Creates tables if
 /// necessary. Read/Write mode.
-pub fn init_db<P: AsRef<Path>>(path: P, args: DatabaseArguments) -> eyre::Result<DatabaseEnv> {
+pub fn init_db<P: AsRef<Path>>(path: P, args: DatabaseArguments) -> eyre::Result<DatabaseEnvIAVL> {
     let client_version = args.client_version().clone();
     let db = create_db(path, args)?;
     db.create_tables()?;
@@ -39,15 +39,15 @@ pub fn init_db<P: AsRef<Path>>(path: P, args: DatabaseArguments) -> eyre::Result
 }
 
 /// Opens up an existing database. Read only mode. It doesn't create it or create tables if missing.
-pub fn open_db_read_only(path: &Path, args: DatabaseArguments) -> eyre::Result<DatabaseEnv> {
-    DatabaseEnv::open(path, DatabaseEnvKind::RO, args)
+pub fn open_db_read_only(path: &Path, args: DatabaseArguments) -> eyre::Result<DatabaseEnvIAVL> {
+    DatabaseEnvIAVL::open(path, DatabaseEnvKind::RO, args)
         .with_context(|| format!("Could not open database at path: {}", path.display()))
 }
 
 /// Opens up an existing database. Read/Write mode with `WriteMap` enabled. It doesn't create it or
 /// create tables if missing.
-pub fn open_db(path: &Path, args: DatabaseArguments) -> eyre::Result<DatabaseEnv> {
-    let db = DatabaseEnv::open(path, DatabaseEnvKind::RW, args.clone())
+pub fn open_db(path: &Path, args: DatabaseArguments) -> eyre::Result<DatabaseEnvIAVL> {
+    let db = DatabaseEnvIAVL::open(path, DatabaseEnvKind::RW, args.clone())
         .with_context(|| format!("Could not open database at path: {}", path.display()))?;
     db.record_client_version(args.client_version().clone())?;
     Ok(db)

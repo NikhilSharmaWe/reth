@@ -14,7 +14,7 @@ use reth_cli_commands::{
     p2p, prune, recover, stage,
 };
 use reth_cli_runner::CliRunner;
-use reth_db::DatabaseEnv;
+use reth_db::DatabaseEnvIAVL;
 use reth_node_builder::{NodeBuilder, WithLaunchContext};
 use reth_node_core::args::utils::DefaultChainSpecParser;
 use reth_node_ethereum::{EthExecutorProvider, EthereumNode};
@@ -133,7 +133,7 @@ impl<C: ChainSpecParser<ChainSpec = ChainSpec>, Ext: clap::Args + fmt::Debug> Cl
     /// ````
     pub fn run<L, Fut>(mut self, launcher: L) -> eyre::Result<()>
     where
-        L: FnOnce(WithLaunchContext<NodeBuilder<Arc<DatabaseEnv>>>, Ext) -> Fut,
+        L: FnOnce(WithLaunchContext<NodeBuilder<Arc<DatabaseEnvIAVL>>>, Ext) -> Fut,
         Fut: Future<Output = eyre::Result<()>>,
     {
         // add network name to logs dir

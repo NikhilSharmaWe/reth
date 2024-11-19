@@ -1,4 +1,4 @@
-use reth_db::{test_utils::create_test_rw_db_with_path, DatabaseEnv};
+use reth_db::{test_utils::create_test_rw_db_with_path, DatabaseEnvIAVL};
 use reth_db_api::{
     database::Database,
     table::{Compress, Encode, Table, TableRow},
@@ -51,7 +51,7 @@ where
 pub(crate) fn set_up_db<T>(
     bench_db_path: &Path,
     pair: &Vec<(<T as Table>::Key, Bytes, <T as Table>::Value, Bytes)>,
-) -> DatabaseEnv
+) -> DatabaseEnvIAVL
 where
     T: Table,
     T::Key: Default + Clone,

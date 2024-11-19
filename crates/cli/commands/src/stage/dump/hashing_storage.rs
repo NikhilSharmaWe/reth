@@ -3,7 +3,7 @@ use std::sync::Arc;
 use super::setup;
 use eyre::Result;
 use reth_chainspec::ChainSpec;
-use reth_db::{tables, DatabaseEnv};
+use reth_db::{tables, DatabaseEnvIAVL};
 use reth_db_api::{database::Database, table::TableImporter};
 use reth_db_common::DbTool;
 use reth_node_builder::{NodeTypesWithDB, NodeTypesWithDBAdapter};
@@ -25,7 +25,7 @@ pub(crate) async fn dump_hashing_storage_stage<N: NodeTypesWithDB<ChainSpec = Ch
 
     if should_run {
         dry_run(
-            ProviderFactory::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>::new(
+            ProviderFactory::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>::new(
                 Arc::new(output_db),
                 db_tool.chain(),
                 StaticFileProvider::read_write(output_datadir.static_files())?,
@@ -43,7 +43,7 @@ fn unwind_and_copy<N: NodeTypesWithDB<ChainSpec = ChainSpec>>(
     db_tool: &DbTool<N>,
     from: u64,
     tip_block_number: u64,
-    output_db: &DatabaseEnv,
+    output_db: &DatabaseEnvIAVL,
 ) -> eyre::Result<()> {
     let provider = db_tool.provider_factory.provider_rw()?;
 

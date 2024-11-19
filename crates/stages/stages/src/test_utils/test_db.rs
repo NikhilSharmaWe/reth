@@ -2,7 +2,7 @@ use reth_chainspec::MAINNET;
 use reth_db::{
     tables,
     test_utils::{create_test_rw_db, create_test_rw_db_with_path, create_test_static_files_dir},
-    DatabaseEnv,
+    DatabaseEnvIAVL,
 };
 use reth_db_api::{
     common::KeyValue,
@@ -66,7 +66,7 @@ impl TestStageDB {
     /// Invoke a callback with transaction committing it afterwards
     pub fn commit<F>(&self, f: F) -> ProviderResult<()>
     where
-        F: FnOnce(&<DatabaseEnv as Database>::TXMut) -> ProviderResult<()>,
+        F: FnOnce(&<DatabaseEnvIAVL as Database>::TXMut) -> ProviderResult<()>,
     {
         let tx = self.factory.provider_rw()?;
         f(tx.tx_ref())?;
@@ -77,7 +77,7 @@ impl TestStageDB {
     /// Invoke a callback with a read transaction
     pub fn query<F, Ok>(&self, f: F) -> ProviderResult<Ok>
     where
-        F: FnOnce(&<DatabaseEnv as Database>::TX) -> ProviderResult<Ok>,
+        F: FnOnce(&<DatabaseEnvIAVL as Database>::TX) -> ProviderResult<Ok>,
     {
         f(self.factory.provider()?.tx_ref())
     }

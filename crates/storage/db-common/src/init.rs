@@ -537,7 +537,7 @@ mod tests {
     use super::*;
     use alloy_genesis::Genesis;
     use reth_chainspec::{Chain, HOLESKY, MAINNET, SEPOLIA};
-    use reth_db::DatabaseEnv;
+    use reth_db::DatabaseEnvIAVL;
     use reth_db_api::{
         cursor::DbCursorRO,
         models::{storage_sharded_key::StorageShardedKey, ShardedKey},
@@ -648,7 +648,7 @@ mod tests {
         let tx = provider.tx_ref();
 
         assert_eq!(
-            collect_table_entries::<Arc<DatabaseEnv>, tables::AccountsHistory>(tx)
+            collect_table_entries::<Arc<DatabaseEnvIAVL>, tables::AccountsHistory>(tx)
                 .expect("failed to collect"),
             vec![
                 (ShardedKey::new(address_with_balance, u64::MAX), IntegerList::new([0]).unwrap()),
@@ -657,7 +657,7 @@ mod tests {
         );
 
         assert_eq!(
-            collect_table_entries::<Arc<DatabaseEnv>, tables::StoragesHistory>(tx)
+            collect_table_entries::<Arc<DatabaseEnvIAVL>, tables::StoragesHistory>(tx)
                 .expect("failed to collect"),
             vec![(
                 StorageShardedKey::new(address_with_storage, storage_key, u64::MAX),

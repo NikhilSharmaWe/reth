@@ -2,7 +2,7 @@ use crate::{providers::StaticFileProvider, HashingWriter, ProviderFactory, TrieW
 use reth_chainspec::{ChainSpec, MAINNET};
 use reth_db::{
     test_utils::{create_test_rw_db, create_test_static_files_dir, TempDatabase},
-    DatabaseEnv,
+    DatabaseEnvIAVL,
 };
 use reth_errors::ProviderResult;
 use reth_node_types::{NodeTypesWithDB, NodeTypesWithDBAdapter};
@@ -27,7 +27,7 @@ pub type MockNodeTypes = reth_node_types::AnyNodeTypesWithEngine<
 >;
 
 /// Mock [`reth_node_types::NodeTypesWithDB`] for testing.
-pub type MockNodeTypesWithDB<DB = TempDatabase<DatabaseEnv>> =
+pub type MockNodeTypesWithDB<DB = TempDatabase<DatabaseEnvIAVL>> =
     NodeTypesWithDBAdapter<MockNodeTypes, Arc<DB>>;
 
 /// Creates test provider factory with mainnet chain spec.

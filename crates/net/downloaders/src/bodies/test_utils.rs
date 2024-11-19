@@ -2,7 +2,7 @@
 
 #![allow(dead_code)]
 
-use reth_db::{tables, DatabaseEnv};
+use reth_db::{tables, DatabaseEnvIAVL};
 use reth_db_api::{database::Database, transaction::DbTxMut};
 use reth_network_p2p::bodies::response::BlockResponse;
 use reth_primitives::{Block, BlockBody, SealedBlock, SealedHeader, B256};
@@ -45,7 +45,7 @@ pub(crate) fn create_raw_bodies(
 }
 
 #[inline]
-pub(crate) fn insert_headers(db: &DatabaseEnv, headers: &[SealedHeader]) {
+pub(crate) fn insert_headers(db: &DatabaseEnvIAVL, headers: &[SealedHeader]) {
     db.update(|tx| {
         for header in headers {
             tx.put::<tables::CanonicalHeaders>(header.number, header.hash()).unwrap();

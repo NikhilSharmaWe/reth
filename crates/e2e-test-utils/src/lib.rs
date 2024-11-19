@@ -15,7 +15,7 @@ use reth::{
     tasks::TaskManager,
 };
 use reth_chainspec::ChainSpec;
-use reth_db::{test_utils::TempDatabase, DatabaseEnv};
+use reth_db::{test_utils::TempDatabase, DatabaseEnvIAVL};
 use reth_node_builder::{
     components::NodeComponentsBuilder, rpc::EthApiBuilderProvider, FullNodeTypesAdapter, Node,
     NodeAdapter, NodeAddOns, NodeComponents, NodeTypesWithDBAdapter, NodeTypesWithEngine,
@@ -120,7 +120,7 @@ where
 
 // Type aliases
 
-type TmpDB = Arc<TempDatabase<DatabaseEnv>>;
+type TmpDB = Arc<TempDatabase<DatabaseEnvIAVL>>;
 type TmpNodeAdapter<N> = FullNodeTypesAdapter<
     NodeTypesWithDBAdapter<N, TmpDB>,
     BlockchainProvider<NodeTypesWithDBAdapter<N, TmpDB>>,

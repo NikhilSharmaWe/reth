@@ -6638,11 +6638,13 @@ version = "1.0.6"
 dependencies = [
  "arbitrary",
  "assert_matches",
+ "backtrace",
  "bytes",
  "criterion",
  "derive_more",
  "eyre",
  "iai-callgrind",
+ "log",
  "metrics",
  "page_size",
  "paste",
@@ -6669,6 +6671,7 @@ dependencies = [
  "tempfile",
  "test-fuzz",
  "thiserror",
+ "tracing",
 ]
 
 [[package]]
@@ -6694,6 +6697,7 @@ dependencies = [
  "reth-trie-common",
  "serde",
  "test-fuzz",
+ "tracing",
 ]
 
 [[package]]

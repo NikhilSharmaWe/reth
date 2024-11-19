@@ -1,5 +1,5 @@
 use super::TestStageDB;
-use reth_db::{test_utils::TempDatabase, DatabaseEnv};
+use reth_db::{test_utils::TempDatabase, DatabaseEnvIAVL};
 use reth_provider::ProviderError;
 use reth_stages_api::{
     ExecInput, ExecOutput, Stage, StageError, StageExt, UnwindInput, UnwindOutput,
@@ -20,7 +20,7 @@ pub(crate) enum TestRunnerError {
 
 /// A generic test runner for stages.
 pub(crate) trait StageTestRunner {
-    type S: Stage<Arc<TempDatabase<DatabaseEnv>>> + 'static;
+    type S: Stage<Arc<TempDatabase<DatabaseEnvIAVL>>> + 'static;
 
     /// Return a reference to the database.
     fn db(&self) -> &TestStageDB;

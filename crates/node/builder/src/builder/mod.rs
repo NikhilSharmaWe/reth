@@ -191,7 +191,7 @@ impl<DB> NodeBuilder<DB> {
     pub fn testing_node(
         mut self,
         task_executor: TaskExecutor,
-    ) -> WithLaunchContext<NodeBuilder<Arc<reth_db::test_utils::TempDatabase<reth_db::DatabaseEnv>>>>
+    ) -> WithLaunchContext<NodeBuilder<Arc<reth_db::test_utils::TempDatabase<reth_db::DatabaseEnvIAVL>>>>
     {
         let path = reth_node_core::dirs::MaybePlatformPath::<DataDirPath>::from(
             reth_db::test_utils::tempdir_path(),

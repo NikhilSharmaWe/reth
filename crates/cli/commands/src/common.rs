@@ -6,7 +6,7 @@ use reth_beacon_consensus::EthBeaconConsensus;
 use reth_chainspec::ChainSpec;
 use reth_cli::chainspec::ChainSpecParser;
 use reth_config::{config::EtlConfig, Config};
-use reth_db::{init_db, open_db_read_only, DatabaseEnv};
+use reth_db::{init_db, open_db_read_only, DatabaseEnvIAVL};
 use reth_db_common::init::init_genesis;
 use reth_downloaders::{bodies::noop::NoopBodiesDownloader, headers::noop::NoopHeaderDownloader};
 use reth_evm::noop::NoopBlockExecutorProvider;
@@ -108,13 +108,13 @@ impl<C: ChainSpecParser<ChainSpec = ChainSpec>> EnvironmentArgs<C> {
     fn create_provider_factory<N: NodeTypesWithEngine<ChainSpec = C::ChainSpec>>(
         &self,
         config: &Config,
-        db: Arc<DatabaseEnv>,
+        db: Arc<DatabaseEnvIAVL>,
         static_file_provider: StaticFileProvider,
-    ) -> eyre::Result<ProviderFactory<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>> {
+    ) -> eyre::Result<ProviderFactory<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>> {
         let has_receipt_pruning = config.prune.as_ref().map_or(false, |a| a.has_receipts_pruning());
         let prune_modes =
             config.prune.as_ref().map(|prune| prune.segments.clone()).unwrap_or_default();
-        let factory = ProviderFactory::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>::new(
+        let factory = ProviderFactory::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>::new(
             db,
             self.chain.clone(),
             static_file_provider,
@@ -140,7 +140,7 @@ impl<C: ChainSpecParser<ChainSpec = ChainSpec>> EnvironmentArgs<C> {
             let (_tip_tx, tip_rx) = watch::channel(B256::ZERO);
 
             // Builds and executes an unwind-only pipeline
-            let mut pipeline = Pipeline::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>::builder()
+            let mut pipeline = Pipeline::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>::builder()
                 .add_stages(DefaultStages::new(
                     factory.clone(),
                     tip_rx,
@@ -168,7 +168,7 @@ pub struct Environment<N: NodeTypesWithEngine> {
     /// Configuration for reth node
     pub config: Config,
     /// Provider factory.
-    pub provider_factory: ProviderFactory<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>,
+    pub provider_factory: ProviderFactory<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>,
     /// Datadir path.
     pub data_dir: ChainPath<DataDirPath>,
 }

@@ -10,7 +10,7 @@ use reth_blockchain_tree::{
 use reth_chainspec::ChainSpec;
 use reth_config::config::StageConfig;
 use reth_consensus::{test_utils::TestConsensus, Consensus};
-use reth_db::{test_utils::TempDatabase, DatabaseEnv as DE};
+use reth_db::{test_utils::TempDatabase, DatabaseEnvIAVL as DE};
 use reth_downloaders::{
     bodies::bodies::BodiesDownloaderBuilder,
     headers::reverse_headers::ReverseHeadersDownloaderBuilder,
@@ -37,7 +37,7 @@ use reth_tasks::TokioTaskExecutor;
 use std::{collections::VecDeque, sync::Arc};
 use tokio::sync::{oneshot, watch};
 
-type DatabaseEnv = TempDatabase<DE>;
+type DatabaseEnvIAVL = TempDatabase<DE>;
 
 type TestBeaconConsensusEngine<Client> = BeaconConsensusEngine<
     MockNodeTypesWithDB,
@@ -237,7 +237,7 @@ impl TestConsensusEngineBuilder {
     /// Builds the test consensus engine into a `TestConsensusEngine` and `TestEnv`.
     pub fn build(
         self,
-    ) -> (TestBeaconConsensusEngine<NoopFullBlockClient>, TestEnv<Arc<DatabaseEnv>>) {
+    ) -> (TestBeaconConsensusEngine<NoopFullBlockClient>, TestEnv<Arc<DatabaseEnvIAVL>>) {
         let networked = NetworkedTestConsensusEngineBuilder { base_config: self, client: None };
 
         networked.build()
@@ -317,7 +317,7 @@ where
     }
 
     /// Builds the test consensus engine into a `TestConsensusEngine` and `TestEnv`.
-    pub fn build(self) -> (TestBeaconConsensusEngine<Client>, TestEnv<Arc<DatabaseEnv>>) {
+    pub fn build(self) -> (TestBeaconConsensusEngine<Client>, TestEnv<Arc<DatabaseEnvIAVL>>) {
         reth_tracing::init_test_tracing();
         let provider_factory =
             create_test_provider_factory_with_chain_spec(self.base_config.chain_spec.clone());

@@ -157,7 +157,7 @@ where
     (preload, input)
 }
 
-fn append<T>(db: DatabaseEnv, input: Vec<(<T as Table>::Key, <T as Table>::Value)>) -> DatabaseEnv
+fn append<T>(db: DatabaseEnvIAVL, input: Vec<(<T as Table>::Key, <T as Table>::Value)>) -> DatabaseEnvIAVL
 where
     T: Table,
 {
@@ -175,7 +175,7 @@ where
     db
 }
 
-fn insert<T>(db: DatabaseEnv, input: Vec<(<T as Table>::Key, <T as Table>::Value)>) -> DatabaseEnv
+fn insert<T>(db: DatabaseEnvIAVL, input: Vec<(<T as Table>::Key, <T as Table>::Value)>) -> DatabaseEnvIAVL
 where
     T: Table,
 {
@@ -193,7 +193,7 @@ where
     db
 }
 
-fn put<T>(db: DatabaseEnv, input: Vec<(<T as Table>::Key, <T as Table>::Value)>) -> DatabaseEnv
+fn put<T>(db: DatabaseEnvIAVL, input: Vec<(<T as Table>::Key, <T as Table>::Value)>) -> DatabaseEnvIAVL
 where
     T: Table,
 {
@@ -221,7 +221,7 @@ struct TableStats {
     size: usize,
 }
 
-fn get_table_stats<T>(db: DatabaseEnv)
+fn get_table_stats<T>(db: DatabaseEnvIAVL)
 where
     T: Table,
 {

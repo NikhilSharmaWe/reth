@@ -8,7 +8,7 @@ use reth_chainspec::ChainSpec;
 use reth_cli::chainspec::ChainSpecParser;
 use reth_config::Config;
 use reth_consensus::Consensus;
-use reth_db::DatabaseEnv;
+use reth_db::DatabaseEnvIAVL;
 use reth_downloaders::{bodies::noop::NoopBodiesDownloader, headers::noop::NoopHeaderDownloader};
 use reth_evm::noop::NoopBlockExecutorProvider;
 use reth_exex::ExExManagerHandle;
@@ -189,7 +189,7 @@ impl Subcommands {
     /// Returns the block range to unwind.
     ///
     /// This returns an inclusive range: [target..=latest]
-    fn unwind_range<N: NodeTypesWithDB<ChainSpec = ChainSpec, DB = Arc<DatabaseEnv>>>(
+    fn unwind_range<N: NodeTypesWithDB<ChainSpec = ChainSpec, DB = Arc<DatabaseEnvIAVL>>>(
         &self,
         factory: ProviderFactory<N>,
     ) -> eyre::Result<RangeInclusive<u64>> {

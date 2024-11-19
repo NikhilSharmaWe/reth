@@ -29,6 +29,8 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 use tx::Tx;
+use tracing::info;
+
 
 pub mod cursor;
 pub mod tx;
@@ -131,7 +133,7 @@ impl DatabaseArguments {
 
 /// Wrapper for the libmdbx environment: [Environment]
 #[derive(Debug)]
-pub struct DatabaseEnv {
+pub struct DatabaseEnvIAVL {
     /// Libmdbx-sys environment.
     inner: Environment,
     /// Cache for metric handles. If `None`, metrics are not recorded.
@@ -139,12 +141,20 @@ pub struct DatabaseEnv {
     /// Write lock for when dealing with a read-write environment.
     _lock_file: Option<StorageLock>,
 }
+#[track_caller]
+fn log_caller_location() -> String {
+    let caller = std::panic::Location::caller();
+    format!("{}:{}", caller.file(), caller.line())
+}
 
-impl Database for DatabaseEnv {
+impl Database for DatabaseEnvIAVL {
     type TX = tx::Tx<RO>;
     type TXMut = tx::Tx<RW>;
 
     fn tx(&self) -> Result<Self::TX, DatabaseError> {
+        info!("tx method in DATABASEENV");
+        let caller_location = log_caller_location();
+        info!("tx method called from {}", caller_location);
         Tx::new_with_metrics(
             self.inner.begin_ro_txn().map_err(|e| DatabaseError::InitTx(e.into()))?,
             self.metrics.clone(),
@@ -153,15 +163,18 @@ impl Database for DatabaseEnv {
     }
 
     fn tx_mut(&self) -> Result<Self::TXMut, DatabaseError> {
+        info!("tx_mut method in DATABASEENV");
+        let caller_location = log_caller_location();
+        info!("tx_mut method called from {}", caller_location);
         Tx::new_with_metrics(
-            self.inner.begin_rw_txn().map_err(|e| DatabaseError::InitTx(e.into()))?,
+             self.inner.begin_rw_txn().map_err(|e| DatabaseError::InitTx(e.into()))?,
             self.metrics.clone(),
         )
         .map_err(|e| DatabaseError::InitTx(e.into()))
     }
 }
 
-impl DatabaseMetrics for DatabaseEnv {
+impl DatabaseMetrics for DatabaseEnvIAVL {
     fn report_metrics(&self) {
         for (name, value, labels) in self.gauge_metrics() {
             gauge!(name, labels).set(value);
@@ -240,13 +253,13 @@ impl DatabaseMetrics for DatabaseEnv {
     }
 }
 
-impl DatabaseMetadata for DatabaseEnv {
+impl DatabaseMetadata for DatabaseEnvIAVL {
     fn metadata(&self) -> DatabaseMetadataValue {
         DatabaseMetadataValue::new(self.freelist().ok())
     }
 }
 
-impl DatabaseEnv {
+impl DatabaseEnvIAVL {
     /// Opens the database at the specified path with the given `EnvKind`.
     ///
     /// It does not create the tables, for that call [`DatabaseEnv::create_tables`].
@@ -256,10 +269,10 @@ impl DatabaseEnv {
         args: DatabaseArguments,
     ) -> Result<Self, DatabaseError> {
         let _lock_file = if kind.is_rw() {
-            Some(
-                StorageLock::try_acquire(path)
-                    .map_err(|err| DatabaseError::Other(err.to_string()))?,
-            )
+                    Some(
+                        StorageLock::try_acquire(path)
+                            .map_err(|err| DatabaseError::Other(err.to_string()))?,
+                    )
         } else {
             None
         };
@@ -458,7 +471,7 @@ impl DatabaseEnv {
     }
 }
 
-impl Deref for DatabaseEnv {
+impl Deref for DatabaseEnvIAVL {
     type Target = Environment;
 
     fn deref(&self) -> &Self::Target {
@@ -489,7 +502,7 @@ mod tests {
     use tempfile::TempDir;
 
     /// Create database for testing
-    fn create_test_db(kind: DatabaseEnvKind) -> Arc<DatabaseEnv> {
+    fn create_test_db(kind: DatabaseEnvKind) -> Arc<DatabaseEnvIAVL> {
         Arc::new(create_test_db_with_path(
             kind,
             &tempfile::TempDir::new().expect(ERROR_TEMPDIR).into_path(),
@@ -497,8 +510,8 @@ mod tests {
     }
 
     /// Create database for testing with specified path
-    fn create_test_db_with_path(kind: DatabaseEnvKind, path: &Path) -> DatabaseEnv {
-        let env = DatabaseEnv::open(path, kind, DatabaseArguments::new(ClientVersion::default()))
+    fn create_test_db_with_path(kind: DatabaseEnvKind, path: &Path) -> DatabaseEnvIAVL {
+        let env = DatabaseEnvIAVL::open(path, kind, DatabaseArguments::new(ClientVersion::default()))
             .expect(ERROR_DB_CREATION);
         env.create_tables().expect(ERROR_TABLE_CREATION);
         env
@@ -541,7 +554,7 @@ mod tests {
 
     #[test]
     fn db_dup_cursor_delete_first() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
 
         let mut dup_cursor = tx.cursor_dup_write::<PlainStorageState>().unwrap();
@@ -605,7 +618,7 @@ mod tests {
 
     #[test]
     fn db_cursor_walk_range() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
 
         // PUT (0, 0), (1, 0), (2, 0), (3, 0)
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
@@ -669,7 +682,7 @@ mod tests {
 
     #[test]
     fn db_cursor_walk_range_on_dup_table() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
 
         let address0 = Address::ZERO;
         let address1 = Address::with_last_byte(1);
@@ -711,7 +724,7 @@ mod tests {
     #[allow(clippy::reversed_empty_ranges)]
     #[test]
     fn db_cursor_walk_range_invalid() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
 
         // PUT (0, 0), (1, 0), (2, 0), (3, 0)
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
@@ -739,7 +752,7 @@ mod tests {
 
     #[test]
     fn db_walker() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
 
         // PUT (0, 0), (1, 0), (3, 0)
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
@@ -769,7 +782,7 @@ mod tests {
 
     #[test]
     fn db_reverse_walker() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
 
         // PUT (0, 0), (1, 0), (3, 0)
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
@@ -799,7 +812,7 @@ mod tests {
 
     #[test]
     fn db_walk_back() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
 
         // PUT (0, 0), (1, 0), (3, 0)
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
@@ -838,7 +851,7 @@ mod tests {
 
     #[test]
     fn db_cursor_seek_exact_or_previous_key() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
 
         // PUT
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
@@ -864,7 +877,7 @@ mod tests {
 
     #[test]
     fn db_cursor_insert() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
 
         // PUT
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
@@ -907,7 +920,7 @@ mod tests {
 
     #[test]
     fn db_cursor_insert_dup() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
 
         let mut dup_cursor = tx.cursor_dup_write::<PlainStorageState>().unwrap();
@@ -925,7 +938,7 @@ mod tests {
 
     #[test]
     fn db_cursor_delete_current_non_existent() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
 
         let key1 = Address::with_last_byte(1);
@@ -953,7 +966,7 @@ mod tests {
 
     #[test]
     fn db_cursor_insert_wherever_cursor_is() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
 
         // PUT
@@ -986,7 +999,7 @@ mod tests {
 
     #[test]
     fn db_cursor_append() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
 
         // PUT
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
@@ -1013,7 +1026,7 @@ mod tests {
 
     #[test]
     fn db_cursor_append_failure() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
 
         // PUT
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
@@ -1050,7 +1063,7 @@ mod tests {
 
     #[test]
     fn db_cursor_upsert() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
         let tx = db.tx_mut().expect(ERROR_INIT_TX);
 
         let mut cursor = tx.cursor_write::<PlainAccountState>().unwrap();
@@ -1085,7 +1098,7 @@ mod tests {
 
     #[test]
     fn db_cursor_dupsort_append() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
 
         let transition_id = 2;
 
@@ -1164,7 +1177,7 @@ mod tests {
             assert_eq!(result.expect(ERROR_RETURN_VALUE), 200);
         }
 
-        let env = DatabaseEnv::open(
+        let env = DatabaseEnvIAVL::open(
             &path,
             DatabaseEnvKind::RO,
             DatabaseArguments::new(ClientVersion::default()),
@@ -1313,7 +1326,7 @@ mod tests {
 
     #[test]
     fn db_sharded_key() {
-        let db: Arc<DatabaseEnv> = create_test_db(DatabaseEnvKind::RW);
+        let db: Arc<DatabaseEnvIAVL> = create_test_db(DatabaseEnvKind::RW);
         let real_key = Address::from_str("0xa2c122be93b0074270ebee7f6b7292c7deb45047").unwrap();
 
         for i in 1..5 {
@@ -1361,3 +1374,52 @@ mod tests {
         }
     }
 }
+
+// /// Wrapper for the libmdbx environment: [Environment]
+// #[derive(Debug)]
+// pub struct DatabaseEnvIAVL {
+//     /// Libmdbx-sys environment.
+//     inner: Environment,
+//     /// Cache for metric handles. If `None`, metrics are not recorded.
+//     metrics: Option<Arc<DatabaseEnvMetrics>>,
+//     /// Write lock for when dealing with a read-write environment.
+//     _lock_file: Option<StorageLock>,
+// }
+
+// #[track_caller]
+// fn log_caller_location() -> String {
+//     let caller = std::panic::Location::caller();
+//     format!("{}:{}", caller.file(), caller.line())
+// }
+ 
+// impl Database for DatabaseEnvIAVL {
+//     type TX = tx::Tx<RO>;
+//     type TXMut = tx::Tx<RW>;
+
+//     fn tx(&self) -> Result<Self::TX, DatabaseError> {
+//         info!("tx method in DATABASEENVIAVL");
+//         let caller_location = log_caller_location();
+//         info!("tx method called from {}", caller_location);
+//         Tx::new_with_metrics(
+//             self.inner.begin_ro_txn().map_err(|e| DatabaseError::InitTx(e.into()))?,
+//             self.metrics.clone(),
+//         )
+//         .map_err(|e| DatabaseError::InitTx(e.into()))
+//     }
+
+//     fn tx_mut(&self) -> Result<Self::TXMut, DatabaseError> {
+//         info!("tx_mut method in DATABASEENVIAVL");
+//         let caller_location = log_caller_location();
+//         info!("tx_mut method called from {}", caller_location);
+//         Tx::new_with_metrics(
+//             self.inner.begin_rw_txn().map_err(|e| DatabaseError::InitTx(e.into()))?,
+//             self.metrics.clone(),
+//         )
+//         .map_err(|e| DatabaseError::InitTx(e.into()))
+//     }
+// }
+
+// impl DatabaseEnvIAVL {
+    
+// }
+

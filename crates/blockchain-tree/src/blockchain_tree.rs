@@ -1030,7 +1030,7 @@ where
         let canonical_header = self.find_canonical_header(&block_hash)?;
         durations_recorder.record_relative(MakeCanonicalAction::FindCanonicalHeader);
         if let Some(header) = canonical_header {
-            info!(target: "blockchain_tree", %block_hash, "Block is already canonical, ignoring.");
+            info!(target: "blockchain_tree", %block_hash, "Block is already canonical, ignoring here2.");
             // TODO: this could be fetched from the chainspec first
             let td =
                 self.externals.provider_factory.provider()?.header_td(&block_hash)?.ok_or_else(

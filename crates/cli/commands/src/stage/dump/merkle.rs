@@ -5,7 +5,7 @@ use alloy_primitives::BlockNumber;
 use eyre::Result;
 use reth_chainspec::ChainSpec;
 use reth_config::config::EtlConfig;
-use reth_db::{tables, DatabaseEnv};
+use reth_db::{tables, DatabaseEnvIAVL};
 use reth_db_api::{database::Database, table::TableImporter};
 use reth_db_common::DbTool;
 use reth_evm::noop::NoopBlockExecutorProvider;
@@ -52,7 +52,7 @@ pub(crate) async fn dump_merkle_stage<N: NodeTypesWithDB<ChainSpec = ChainSpec>>
 
     if should_run {
         dry_run(
-            ProviderFactory::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>::new(
+            ProviderFactory::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>::new(
                 Arc::new(output_db),
                 db_tool.chain(),
                 StaticFileProvider::read_write(output_datadir.static_files())?,
@@ -70,7 +70,7 @@ fn unwind_and_copy<N: NodeTypesWithDB<ChainSpec = ChainSpec>>(
     db_tool: &DbTool<N>,
     range: (u64, u64),
     tip_block_number: u64,
-    output_db: &DatabaseEnv,
+    output_db: &DatabaseEnvIAVL,
 ) -> eyre::Result<()> {
     let (from, to) = range;
     let provider = db_tool.provider_factory.provider_rw()?;

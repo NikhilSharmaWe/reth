@@ -13,7 +13,7 @@ use reth_cli_runner::CliContext;
 use reth_cli_util::get_secret_key;
 use reth_config::Config;
 use reth_consensus::Consensus;
-use reth_db::DatabaseEnv;
+use reth_db::DatabaseEnvIAVL;
 use reth_engine_util::engine_store::{EngineMessageStore, StoredEngineApiMessage};
 use reth_fs_util as fs;
 use reth_network::{BlockDownloaderProvider, NetworkHandle};
@@ -135,7 +135,7 @@ impl<C: ChainSpecParser<ChainSpec = ChainSpec>> Command<C> {
         let network_client = network.fetch_client().await?;
         let (beacon_consensus_engine, beacon_engine_handle) = BeaconConsensusEngine::new(
             network_client,
-            Pipeline::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>::builder().build(
+            Pipeline::<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>::builder().build(
                 provider_factory.clone(),
                 StaticFileProducer::new(provider_factory.clone(), PruneModes::none()),
             ),

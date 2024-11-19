@@ -1,5 +1,5 @@
 use clap::Parser;
-use reth_db::{open_db_read_only, tables_to_generic, DatabaseEnv, Tables};
+use reth_db::{open_db_read_only, tables_to_generic, DatabaseEnvIAVL, Tables};
 use reth_db_api::{cursor::DbCursorRO, database::Database, table::Table, transaction::DbTx};
 use reth_db_common::DbTool;
 use reth_node_builder::{NodeTypesWithDBAdapter, NodeTypesWithEngine};
@@ -54,7 +54,7 @@ impl Command {
     /// then written to a file in the output directory.
     pub fn execute<T: NodeTypesWithEngine>(
         self,
-        tool: &DbTool<NodeTypesWithDBAdapter<T, Arc<DatabaseEnv>>>,
+        tool: &DbTool<NodeTypesWithDBAdapter<T, Arc<DatabaseEnvIAVL>>>,
     ) -> eyre::Result<()> {
         warn!("Make sure the node is not running when running `reth db diff`!");
         // open second db

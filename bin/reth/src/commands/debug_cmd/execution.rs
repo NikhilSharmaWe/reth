@@ -11,7 +11,7 @@ use reth_cli_runner::CliContext;
 use reth_cli_util::get_secret_key;
 use reth_config::Config;
 use reth_consensus::Consensus;
-use reth_db::DatabaseEnv;
+use reth_db::DatabaseEnvIAVL;
 use reth_downloaders::{
     bodies::bodies::BodiesDownloaderBuilder,
     headers::reverse_headers::ReverseHeadersDownloaderBuilder,
@@ -119,7 +119,7 @@ impl<C: ChainSpecParser<ChainSpec = ChainSpec>> Command<C> {
         &self,
         config: &Config,
         task_executor: TaskExecutor,
-        provider_factory: ProviderFactory<NodeTypesWithDBAdapter<N, Arc<DatabaseEnv>>>,
+        provider_factory: ProviderFactory<NodeTypesWithDBAdapter<N, Arc<DatabaseEnvIAVL>>>,
         network_secret_path: PathBuf,
         default_peers_path: PathBuf,
     ) -> eyre::Result<NetworkHandle> {

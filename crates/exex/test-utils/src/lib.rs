@@ -14,7 +14,7 @@ use reth_chainspec::{ChainSpec, MAINNET};
 use reth_consensus::test_utils::TestConsensus;
 use reth_db::{
     test_utils::{create_test_rw_db, create_test_static_files_dir, TempDatabase},
-    DatabaseEnv,
+    DatabaseEnvIAVL,
 };
 use reth_db_common::init::init_genesis;
 use reth_evm::test_utils::MockExecutorProvider;
@@ -148,7 +148,7 @@ where
 }
 
 /// A shared [`TempDatabase`] used for testing
-pub type TmpDB = Arc<TempDatabase<DatabaseEnv>>;
+pub type TmpDB = Arc<TempDatabase<DatabaseEnvIAVL>>;
 /// The [`NodeAdapter`] for the [`TestExExContext`]. Contains type necessary to
 /// boot the testing environment
 pub type Adapter = NodeAdapter<

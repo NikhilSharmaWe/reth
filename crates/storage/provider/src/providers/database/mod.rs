@@ -9,7 +9,7 @@ use crate::{
 };
 use core::fmt;
 use reth_chainspec::ChainInfo;
-use reth_db::{init_db, mdbx::DatabaseArguments, DatabaseEnv};
+use reth_db::{init_db, mdbx::DatabaseArguments, DatabaseEnvIAVL};
 use reth_db_api::{database::Database, models::StoredBlockBodyIndices};
 use reth_errors::{RethError, RethResult};
 use reth_evm::ConfigureEvmEnv;
@@ -103,7 +103,7 @@ impl<N: NodeTypesWithDB> ProviderFactory<N> {
     }
 }
 
-impl<N: NodeTypesWithDB<DB = Arc<DatabaseEnv>>> ProviderFactory<N> {
+impl<N: NodeTypesWithDB<DB = Arc<DatabaseEnvIAVL>>> ProviderFactory<N> {
     /// Create new database provider by passing a path. [`ProviderFactory`] will own the database
     /// instance.
     pub fn new_with_database_path<P: AsRef<Path>>(
@@ -673,7 +673,7 @@ mod tests {
     fn provider_factory_with_database_path() {
         let chain_spec = ChainSpecBuilder::mainnet().build();
         let (_static_dir, static_dir_path) = create_test_static_files_dir();
-        let factory = ProviderFactory::<MockNodeTypesWithDB<DatabaseEnv>>::new_with_database_path(
+        let factory = ProviderFactory::<MockNodeTypesWithDB<DatabaseEnvIAVL>>::new_with_database_path(
             tempfile::TempDir::new().expect(ERROR_TEMPDIR).into_path(),
             Arc::new(chain_spec),
             DatabaseArguments::new(Default::default()),

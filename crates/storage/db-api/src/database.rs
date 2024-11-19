@@ -4,7 +4,12 @@ use crate::{
     DatabaseError,
 };
 use std::{fmt::Debug, sync::Arc};
-
+use tracing::info;
+#[track_caller]
+fn log_caller_location() -> String {
+    let caller = std::panic::Location::caller();
+    format!("{}:{}", caller.file(), caller.line())
+}
 /// Main Database trait that can open read-only and read-write transactions.
 ///
 /// Sealed trait which cannot be implemented by 3rd parties, exposed only for consumption.
@@ -27,10 +32,17 @@ pub trait Database: Send + Sync + Debug {
     fn view<T, F>(&self, f: F) -> Result<T, DatabaseError>
     where
         F: FnOnce(&Self::TX) -> T,
+        T: std::fmt::Debug,
     {
+        let caller_location = log_caller_location();
+        info!("VIEW METHOD called from {}", caller_location);
         let tx = self.tx()?;
+        
+        info!("transaction in view method: {:?}", tx);
 
         let res = f(&tx);
+        info!("transaction response in view method: {:?}", res);
+
         tx.commit()?;
 
         Ok(res)
@@ -41,10 +53,16 @@ pub trait Database: Send + Sync + Debug {
     fn update<T, F>(&self, f: F) -> Result<T, DatabaseError>
     where
         F: FnOnce(&Self::TXMut) -> T,
+        T: std::fmt::Debug,
     {
-        let tx = self.tx_mut()?;
+        let caller_location = log_caller_location();
+        info!("UPDATE METHOD called from {}", caller_location);
+        let tx: <Self as Database>::TXMut = self.tx_mut()?;
+        info!("transaction in view method: {:?}", tx);
 
         let res = f(&tx);
+        info!("transaction response in update method: {:?}", res);
+
         tx.commit()?;
 
         Ok(res)
@@ -56,10 +74,12 @@ impl<DB: Database> Database for Arc<DB> {
     type TXMut = <DB as Database>::TXMut;
 
     fn tx(&self) -> Result<Self::TX, DatabaseError> {
+        info!("tx method in db-api/src/database.rs Arc<DB>");
         <DB as Database>::tx(self)
     }
 
     fn tx_mut(&self) -> Result<Self::TXMut, DatabaseError> {
+        info!("tx_mut method in db-api/src/database.rs Arc<DB>");
         <DB as Database>::tx_mut(self)
     }
 }
@@ -69,10 +89,12 @@ impl<DB: Database> Database for &DB {
     type TXMut = <DB as Database>::TXMut;
 
     fn tx(&self) -> Result<Self::TX, DatabaseError> {
+        info!("tx method in db-api/src/database.rs &DB");
         <DB as Database>::tx(self)
     }
 
     fn tx_mut(&self) -> Result<Self::TXMut, DatabaseError> {
+        info!("tx_mut method in db-api/src/database.rs &DB");
         <DB as Database>::tx_mut(self)
     }
 }

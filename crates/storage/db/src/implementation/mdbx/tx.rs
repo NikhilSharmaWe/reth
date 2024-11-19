@@ -22,6 +22,7 @@ use std::{
     },
     time::{Duration, Instant},
 };
+use tracing::info;
 
 /// Duration after which we emit the log about long-lived database transactions.
 const LONG_TRANSACTION_DURATION: Duration = Duration::from_secs(60);
@@ -265,6 +266,7 @@ impl<K: TransactionKind> DbTx for Tx<K> {
     type DupCursor<T: DupSort> = Cursor<K, T>;
 
     fn get<T: Table>(&self, key: T::Key) -> Result<Option<<T as Table>::Value>, DatabaseError> {
+        info!("DbTx get");
         self.execute_with_operation_metric::<T, _>(Operation::Get, None, |tx| {
             tx.get(self.get_dbi::<T>()?, key.encode().as_ref())
                 .map_err(|e| DatabaseError::Read(e.into()))?
@@ -274,6 +276,7 @@ impl<K: TransactionKind> DbTx for Tx<K> {
     }
 
     fn commit(self) -> Result<bool, DatabaseError> {
+        info!("DbTx commit");
         self.execute_with_close_transaction_metric(TransactionOutcome::Commit, |this| {
             match this.inner.commit().map_err(|e| DatabaseError::Commit(e.into())) {
                 Ok((v, latency)) => (Ok(v), Some(latency)),
@@ -283,6 +286,7 @@ impl<K: TransactionKind> DbTx for Tx<K> {
     }
 
     fn abort(self) {
+        info!("abort");
         self.execute_with_close_transaction_metric(TransactionOutcome::Abort, |this| {
             (drop(this.inner), None)
         })
@@ -290,16 +294,19 @@ impl<K: TransactionKind> DbTx for Tx<K> {
 
     // Iterate over read only values in database.
     fn cursor_read<T: Table>(&self) -> Result<Self::Cursor<T>, DatabaseError> {
+        info!("DbTx cursor_read");
         self.new_cursor()
     }
 
     /// Iterate over read only values in database.
     fn cursor_dup_read<T: DupSort>(&self) -> Result<Self::DupCursor<T>, DatabaseError> {
+        info!("DbTx cursor_dup_read");
         self.new_cursor()
     }
 
     /// Returns number of entries in the table using cheap DB stats invocation.
     fn entries<T: Table>(&self) -> Result<usize, DatabaseError> {
+        info!("DbTx entries");
         Ok(self
             .inner
             .db_stat_with_dbi(self.get_dbi::<T>()?)
@@ -318,11 +325,27 @@ impl<K: TransactionKind> DbTx for Tx<K> {
     }
 }
 
+#[track_caller]
+fn log_caller_location() -> String {
+    let caller = std::panic::Location::caller();
+    format!("{}:{}", caller.file(), caller.line())
+}
+
 impl DbTxMut for Tx<RW> {
     type CursorMut<T: Table> = Cursor<RW, T>;
     type DupCursorMut<T: DupSort> = Cursor<RW, T>;
 
+    #[track_caller]
     fn put<T: Table>(&self, key: T::Key, value: T::Value) -> Result<(), DatabaseError> {
+        // let bt = Backtrace::force_capture();
+        // let caller = std::panic::Location::caller();
+        // // info!("DbTxMut put");
+        // info!("DbTxMut put called from {}:{}", caller.file(), caller.line());        trace!("Putting data into table: {}, key length: {}", T::NAME, key.clone().encode().as_ref().len());
+
+        let caller_location = log_caller_location();
+        info!("DbTxMut put iavl called from {}", caller_location);
+        // trace!("Putting data into table: {}, key length: {}", T::NAME, key.clone().encode().as_ref().len());
+
         let key = key.encode();
         let value = value.compress();
         self.execute_with_operation_metric::<T, _>(
@@ -367,17 +390,19 @@ impl DbTxMut for Tx<RW> {
     }
 
     fn cursor_write<T: Table>(&self) -> Result<Self::CursorMut<T>, DatabaseError> {
+        info!("DbTxMut cursor");
         self.new_cursor()
     }
 
     fn cursor_dup_write<T: DupSort>(&self) -> Result<Self::DupCursorMut<T>, DatabaseError> {
+        info!("DbTxMut cursor_dup_write");
         self.new_cursor()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{mdbx::DatabaseArguments, tables, DatabaseEnv, DatabaseEnvKind};
+    use crate::{mdbx::DatabaseArguments, tables, DatabaseEnvIAVL, DatabaseEnvKind};
     use reth_db_api::{database::Database, models::ClientVersion, transaction::DbTx};
     use reth_libmdbx::MaxReadTransactionDuration;
     use reth_storage_errors::db::DatabaseError;
@@ -393,7 +418,7 @@ mod tests {
             .with_max_read_transaction_duration(Some(MaxReadTransactionDuration::Set(
                 MAX_DURATION,
             )));
-        let db = DatabaseEnv::open(dir.path(), DatabaseEnvKind::RW, args).unwrap().with_metrics();
+        let db = DatabaseEnvIAVL::open(dir.path(), DatabaseEnvKind::RW, args).unwrap().with_metrics();
 
         let mut tx = db.tx().unwrap();
         tx.metrics_handler.as_mut().unwrap().long_transaction_duration = MAX_DURATION;
@@ -419,7 +444,7 @@ mod tests {
             .with_max_read_transaction_duration(Some(MaxReadTransactionDuration::Set(
                 MAX_DURATION,
             )));
-        let db = DatabaseEnv::open(dir.path(), DatabaseEnvKind::RW, args).unwrap().with_metrics();
+        let db = DatabaseEnvIAVL::open(dir.path(), DatabaseEnvKind::RW, args).unwrap().with_metrics();
 
         let mut tx = db.tx().unwrap();
         tx.metrics_handler.as_mut().unwrap().long_transaction_duration = MAX_DURATION;

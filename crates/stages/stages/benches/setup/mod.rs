@@ -1,6 +1,6 @@
 #![allow(unreachable_pub)]
 use itertools::concat;
-use reth_db::{tables, test_utils::TempDatabase, DatabaseEnv};
+use reth_db::{tables, test_utils::TempDatabase, DatabaseEnvIAVL};
 use reth_db_api::{
     cursor::DbCursorRO,
     transaction::{DbTx, DbTxMut},
@@ -28,7 +28,7 @@ use reth_trie_db::DatabaseStateRoot;
 
 pub(crate) type StageRange = (ExecInput, UnwindInput);
 
-pub(crate) fn stage_unwind<S: Clone + Stage<Arc<TempDatabase<DatabaseEnv>>>>(
+pub(crate) fn stage_unwind<S: Clone + Stage<Arc<TempDatabase<DatabaseEnvIAVL>>>>(
     stage: S,
     db: &TestStageDB,
     range: StageRange,
@@ -57,7 +57,7 @@ pub(crate) fn stage_unwind<S: Clone + Stage<Arc<TempDatabase<DatabaseEnv>>>>(
     });
 }
 
-pub(crate) fn unwind_hashes<S: Clone + Stage<Arc<TempDatabase<DatabaseEnv>>>>(
+pub(crate) fn unwind_hashes<S: Clone + Stage<Arc<TempDatabase<DatabaseEnvIAVL>>>>(
     stage: S,
     db: &TestStageDB,
     range: StageRange,
